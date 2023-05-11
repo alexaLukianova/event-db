@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+    tier: database
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        tier: database
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:15.2-alpine
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: POSTGRES_DB
+              value: "events"
+            - name: POSTGRES_USER
+              value: "lukianova"
+            - name: POSTGRES_PASSWORD
+              value: "admin123"
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          volumeMounts:
+            - name: postgresql-event
+              mountPath: /var/lib/postgresql/data
+
+            - mountPath: /docker-entrypoint-initdb.d
+              name: postgresql-initdb
+      volumes:
+        - name: postgresql-event
+          persistentVolumeClaim:
+            claimName: postgresql-event
+
+        - name: postgresql-initdb
+          configMap:
+            name: postgresql-initdb-config
